@@ -1,0 +1,11 @@
+{
+  "domain": "geely_galaxy_ha",
+  "name": "Geely Galaxy HA",
+  "version": "0.1.0",
+  "documentation": "https://github.com/kooritea/geely_galaxy_ha",
+  "integration_type": "hub",
+  "iot_class": "cloud_polling",
+  "config_flow": true,
+  "requirements": [],
+  "codeowners": []
+}

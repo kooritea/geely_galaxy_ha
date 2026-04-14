@@ -1,0 +1,7 @@
+{
+  "domain": "geely_galaxy_ha",
+  "name": "Geely Galaxy HA",
+  "country": "CN",
+  "render_readme": true,
+  "homeassistant": "2024.1.0"
+}
