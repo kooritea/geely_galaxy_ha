@@ -1,11 +1,141 @@
 {
   "entity": {
     "sensor": {
-      "connectivity": {
-        "name": "连通性",
+      "distance_to_empty": {
+        "name": "剩余续航里程"
+      },
+      "speed": {
+        "name": "当前速度"
+      },
+      "direction": {
+        "name": "方向"
+      },
+      "odometer": {
+        "name": "行驶里程"
+      },
+      "distance_to_service": {
+        "name": "保养剩余里程"
+      },
+      "brake_fluid_level_status": {
+        "name": "制动液位状态"
+      },
+      "service_warning_status": {
+        "name": "保养警告"
+      },
+      "battery_voltage": {
+        "name": "电池电压"
+      },
+      "charge_level": {
+        "name": "电量百分比"
+      },
+      "aver_power_consumption": {
+        "name": "平均电耗"
+      },
+      "distance_to_empty_on_battery_only": {
+        "name": "纯电续航里程"
+      },
+      "time_to_fully_charged": {
+        "name": "充满电所需时间"
+      },
+      "state_of_charge": {
+        "name": "充电量状态"
+      },
+      "status_of_charger_connection": {
+        "name": "充电器连接状态"
+      },
+      "charge_led_ctrl": {
+        "name": "充电指示灯"
+      },
+      "charge_hv_sts": {
+        "name": "高压充电状态"
+      },
+      "cruise_control_status": {
+        "name": "巡航控制"
+      },
+      "transimission_gear_position": {
+        "name": "挡位",
         "state": {
-          "online": "已连接"
+          "drive": "前进挡",
+          "reverse": "倒挡",
+          "neutral": "空挡"
         }
+      },
+      "engine_speed": {
+        "name": "发动机转速"
+      },
+      "avg_speed": {
+        "name": "平均速度"
+      },
+      "fuel_type": {
+        "name": "燃料类型"
+      },
+      "update_time": {
+        "name": "数据更新时间"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "连通性"
+      },
+      "door_lock_status_driver": {
+        "name": "主驾门锁"
+      },
+      "door_lock_status_passenger": {
+        "name": "副驾门锁"
+      },
+      "door_lock_status_driver_rear": {
+        "name": "后左门锁"
+      },
+      "door_lock_status_passenger_rear": {
+        "name": "后右门锁"
+      },
+      "door_open_status_driver": {
+        "name": "主驾车门"
+      },
+      "door_open_status_passenger": {
+        "name": "副驾车门"
+      },
+      "trunk_open_status": {
+        "name": "后备箱"
+      },
+      "hand_brake_status": {
+        "name": "手刹"
+      },
+      "electric_park_brake_status": {
+        "name": "电子驻车"
+      },
+      "seat_belt_status_driver": {
+        "name": "驾驶员安全带"
+      },
+      "vehicle_alarm": {
+        "name": "车辆报警"
+      },
+      "is_charging": {
+        "name": "正在充电"
+      },
+      "is_plugged_in": {
+        "name": "充电器已连接"
+      },
+      "pt_ready": {
+        "name": "车辆就绪",
+        "state": {
+          "on": "就绪",
+          "off": "未就绪"
+        }
+      },
+      "brake_pedal_depressed": {
+        "name": "刹车踏板"
+      },
+      "pre_climate_active": {
+        "name": "空调预启动"
+      },
+      "eg_blocked_status": {
+        "name": "发动机锁止"
+      }
+    },
+    "device_tracker": {
+      "vehicle_location": {
+        "name": "车辆位置"
       }
     }
   }

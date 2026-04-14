@@ -1,11 +1,141 @@
 {
   "entity": {
     "sensor": {
-      "connectivity": {
-        "name": "Connectivity",
+      "distance_to_empty": {
+        "name": "Range"
+      },
+      "speed": {
+        "name": "Speed"
+      },
+      "direction": {
+        "name": "Direction"
+      },
+      "odometer": {
+        "name": "Odometer"
+      },
+      "distance_to_service": {
+        "name": "Distance to Service"
+      },
+      "brake_fluid_level_status": {
+        "name": "Brake Fluid Level"
+      },
+      "service_warning_status": {
+        "name": "Service Warning"
+      },
+      "battery_voltage": {
+        "name": "Battery Voltage"
+      },
+      "charge_level": {
+        "name": "Battery Level"
+      },
+      "aver_power_consumption": {
+        "name": "Average Power Consumption"
+      },
+      "distance_to_empty_on_battery_only": {
+        "name": "Battery Only Range"
+      },
+      "time_to_fully_charged": {
+        "name": "Time to Fully Charged"
+      },
+      "state_of_charge": {
+        "name": "State of Charge"
+      },
+      "status_of_charger_connection": {
+        "name": "Charger Connection Status"
+      },
+      "charge_led_ctrl": {
+        "name": "Charge LED"
+      },
+      "charge_hv_sts": {
+        "name": "HV Charge Status"
+      },
+      "cruise_control_status": {
+        "name": "Cruise Control"
+      },
+      "transimission_gear_position": {
+        "name": "Gear Position",
         "state": {
-          "online": "Online"
+          "drive": "Drive",
+          "reverse": "Reverse",
+          "neutral": "Neutral"
         }
+      },
+      "engine_speed": {
+        "name": "Engine Speed"
+      },
+      "avg_speed": {
+        "name": "Average Speed"
+      },
+      "fuel_type": {
+        "name": "Fuel Type"
+      },
+      "update_time": {
+        "name": "Last Update"
+      }
+    },
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Connectivity"
+      },
+      "door_lock_status_driver": {
+        "name": "Driver Door Lock"
+      },
+      "door_lock_status_passenger": {
+        "name": "Passenger Door Lock"
+      },
+      "door_lock_status_driver_rear": {
+        "name": "Rear Left Door Lock"
+      },
+      "door_lock_status_passenger_rear": {
+        "name": "Rear Right Door Lock"
+      },
+      "door_open_status_driver": {
+        "name": "Driver Door"
+      },
+      "door_open_status_passenger": {
+        "name": "Passenger Door"
+      },
+      "trunk_open_status": {
+        "name": "Trunk"
+      },
+      "hand_brake_status": {
+        "name": "Handbrake"
+      },
+      "electric_park_brake_status": {
+        "name": "Electric Parking Brake"
+      },
+      "seat_belt_status_driver": {
+        "name": "Driver Seat Belt"
+      },
+      "vehicle_alarm": {
+        "name": "Vehicle Alarm"
+      },
+      "is_charging": {
+        "name": "Charging"
+      },
+      "is_plugged_in": {
+        "name": "Plugged In"
+      },
+      "pt_ready": {
+        "name": "EV Ready",
+        "state": {
+          "on": "Ready",
+          "off": "Not Ready"
+        }
+      },
+      "brake_pedal_depressed": {
+        "name": "Brake Pedal"
+      },
+      "pre_climate_active": {
+        "name": "Pre-Climate"
+      },
+      "eg_blocked_status": {
+        "name": "Engine Blocked"
+      }
+    },
+    "device_tracker": {
+      "vehicle_location": {
+        "name": "Vehicle Location"
       }
     }
   }
