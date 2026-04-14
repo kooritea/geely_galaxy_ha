@@ -8,8 +8,10 @@ CONF_REFRESH_TOKEN = "refresh_token"
 CONF_HARDWARE_DEVICE_ID = "hardware_device_id"
 CONF_TOKEN = "token"
 CONF_TOKEN_EXPIRES_AT = "token_expires_at"
+CONF_VEHICLE_AUTHORIZATIONS = "vehicle_authorizations"
 
 DEFAULT_SCAN_INTERVAL = timedelta(minutes=10)
+DEFAULT_VEHICLE_STATUS_INTERVAL = timedelta(minutes=1)
 
 API_KEY_REFRESH = "204179735"
 API_KEY_VEHICLE_LIST = "204373120"

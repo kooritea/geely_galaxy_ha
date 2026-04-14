@@ -1,0 +1,12 @@
+{
+  "entity": {
+    "sensor": {
+      "connectivity": {
+        "name": "连通性",
+        "state": {
+          "online": "已连接"
+        }
+      }
+    }
+  }
+}

@@ -21,6 +21,7 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
         CONF_REFRESH_TOKEN,
         CONF_TOKEN,
         CONF_TOKEN_EXPIRES_AT,
+        CONF_VEHICLE_AUTHORIZATIONS,
     )
     from .coordinator import GeelyGalaxyCoordinator
 
@@ -45,19 +46,27 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
                 payload = {"code": str(resp.status), "msg": await resp.text()}
             return resp.status, payload
 
-    async def _on_token_update(token: str, token_expires_at: int, refresh_token: str) -> None:
+    async def _persist_entry_data(partial_data: dict[str, Any]) -> None:
         new_data = dict(entry.data)
-        old_refresh_token = new_data.get(CONF_REFRESH_TOKEN)
-        new_data[CONF_TOKEN] = token
-        new_data[CONF_TOKEN_EXPIRES_AT] = token_expires_at
-        new_data[CONF_REFRESH_TOKEN] = refresh_token
+        new_data.update(partial_data)
         hass.config_entries.async_update_entry(entry, data=new_data)
-        _LOGGER.info(
-            "token 已更新并写回配置，entry_id=%s，token_expires_at=%s，refresh_token_changed=%s",
-            entry.entry_id,
-            token_expires_at,
-            refresh_token != old_refresh_token,
+        _LOGGER.info("配置已持久化，entry_id=%s，keys=%s", entry.entry_id, list(partial_data.keys()))
+
+    async def _on_token_update(token: str, token_expires_at: int, refresh_token: str) -> None:
+        await _persist_entry_data(
+            {
+                CONF_TOKEN: token,
+                CONF_TOKEN_EXPIRES_AT: token_expires_at,
+                CONF_REFRESH_TOKEN: refresh_token,
+            }
         )
+        _LOGGER.info("token 已更新，entry_id=%s，token_expires_at=%s", entry.entry_id, token_expires_at)
+
+    async def _on_vehicle_authorizations_update(entry_obj: Any, authorizations: dict[str, dict[str, Any]]) -> None:
+        if entry_obj.entry_id != entry.entry_id:
+            return
+        await _persist_entry_data({CONF_VEHICLE_AUTHORIZATIONS: authorizations})
+        _LOGGER.info("车辆 authorization 已持久化，entry_id=%s，count=%s", entry.entry_id, len(authorizations))
 
     client = GeelyGalaxyApiClient(
         refresh_token=entry.data[CONF_REFRESH_TOKEN],
@@ -69,15 +78,19 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     )
     _LOGGER.info("API client 初始化完成，entry_id=%s", entry.entry_id)
 
-    coordinator = GeelyGalaxyCoordinator(hass, client)
+    coordinator = GeelyGalaxyCoordinator(
+        hass,
+        client,
+        persisted_vehicle_authorizations=entry.data.get(CONF_VEHICLE_AUTHORIZATIONS) or {},
+        persist_vehicle_authorizations_cb=_on_vehicle_authorizations_update,
+    )
     _LOGGER.info("coordinator 初始化完成，entry_id=%s", entry.entry_id)
-    _LOGGER.info("开始首次刷新车辆数据，entry_id=%s", entry.entry_id)
-    try:
-        await coordinator.async_config_entry_first_refresh()
-        _LOGGER.info("首次刷新车辆数据成功，entry_id=%s", entry.entry_id)
-    except Exception:
-        _LOGGER.exception("首次刷新车辆数据失败，entry_id=%s", entry.entry_id)
-        raise
+
+    await coordinator.async_config_entry_first_refresh()
+    _LOGGER.info("首次刷新车辆列表完成，entry_id=%s，count=%s", entry.entry_id, len(coordinator.data or []))
+
+    coordinator.async_start_vehicle_status_polling(entry)
+    _LOGGER.info("已启动每分钟车辆状态轮询，entry_id=%s", entry.entry_id)
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "client": client,
@@ -85,18 +98,18 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     }
     _LOGGER.info("hass.data 写入完成，entry_id=%s", entry.entry_id)
 
-    _LOGGER.info("开始转发平台 setup，entry_id=%s，platforms=%s", entry.entry_id, PLATFORMS)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    _LOGGER.info("平台 setup 转发完成，entry_id=%s", entry.entry_id)
-    _LOGGER.info("Geely Galaxy entry 初始化完成，entry_id=%s", entry.entry_id)
+    _LOGGER.info("平台 setup 转发完成，entry_id=%s，platforms=%s", entry.entry_id, PLATFORMS)
     return True
 
 
 async def async_unload_entry(hass: Any, entry: Any) -> bool:
     """Unload Geely Galaxy config entry."""
-    _LOGGER.info("开始卸载 Geely Galaxy entry，entry_id=%s", entry.entry_id)
+    data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+    if data and data.get("coordinator"):
+        await data["coordinator"].async_stop()
+
     ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if ok and DOMAIN in hass.data:
         hass.data[DOMAIN].pop(entry.entry_id, None)
-    _LOGGER.info("卸载 Geely Galaxy entry 结果=%s，entry_id=%s", ok, entry.entry_id)
     return ok
