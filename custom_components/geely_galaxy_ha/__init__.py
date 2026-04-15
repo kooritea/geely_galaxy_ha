@@ -107,6 +107,7 @@ async def async_unload_entry(hass: Any, entry: Any) -> bool:
     """Unload Geely Galaxy config entry."""
     data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
     if data and data.get("coordinator"):
+        await data["coordinator"].async_cancel_all_rapid_polls()
         await data["coordinator"].async_stop()
 
     ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)

@@ -30,7 +30,7 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
         self,
         description: GeelyVehicleSwitchDescription,
         vehicle: dict,
-        entry_id: str,
+        entry: ConfigEntry,
         coordinator: Any,
         client: Any,
     ) -> None:
@@ -38,9 +38,9 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
         self._coordinator = coordinator
         self._client = client
         self._vin = vehicle.get("vin", "unknown")
-        self._entry_id = entry_id
+        self._entry = entry
         name = vehicle.get("carName") or vehicle.get("seriesNameVs") or self._vin
-        self._attr_unique_id = f"{entry_id}_{self._vin}_{description.key}"
+        self._attr_unique_id = f"{entry.entry_id}_{self._vin}_{description.key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, self._vin)},
             name=name,
@@ -58,6 +58,13 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
     @property
     def is_on(self) -> bool | None:
         detailed = self._coordinator.get_vehicle_status_attributes(self._vin)
+        return self._extract_switch_state(detailed)
+
+    def _extract_switch_state(self, detailed: dict[str, Any]) -> bool | None:
+        """从车辆状态字典中提取本开关的 on/off 状态。
+
+        供 coordinator 快速轮询的 check_fn 回调使用。
+        """
         vehicle_status = detailed.get("vehicleStatus", {}) if isinstance(detailed, dict) else {}
         if not isinstance(vehicle_status, dict):
             return None
@@ -90,6 +97,8 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
         if not authorization:
             return
 
+        pre_command_value = self.is_on
+
         if self.entity_description.service_type == "climate":
             await self._client.async_remote_climate(
                 vehicle_id=self._vin,
@@ -111,11 +120,24 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
 
         self.async_write_ha_state()
 
+        # 启动快速轮询以尽早反映车辆状态变化
+        self.hass.async_create_task(
+            self._coordinator.async_start_rapid_poll(
+                vin=self._vin,
+                entry=self._entry,
+                switch_key=self.entity_description.key,
+                pre_command_value=pre_command_value,
+                check_fn=self._extract_switch_state,
+            )
+        )
+
     async def async_turn_off(self, **kwargs: Any) -> None:
         auth = self._coordinator.vehicle_authorizations.get(self._vin, {})
         authorization = auth.get("access_token")
         if not authorization:
             return
+
+        pre_command_value = self.is_on
 
         if self.entity_description.service_type == "climate":
             await self._client.async_remote_climate(
@@ -137,6 +159,17 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
             )
 
         self.async_write_ha_state()
+
+        # 启动快速轮询以尽早反映车辆状态变化
+        self.hass.async_create_task(
+            self._coordinator.async_start_rapid_poll(
+                vin=self._vin,
+                entry=self._entry,
+                switch_key=self.entity_description.key,
+                pre_command_value=pre_command_value,
+                check_fn=self._extract_switch_state,
+            )
+        )
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(self._coordinator.async_add_listener(self.async_write_ha_state))
@@ -160,7 +193,7 @@ async def async_setup_entry(
     for vehicle in valid_vehicles:
         for description in VEHICLE_SWITCH_DESCRIPTIONS:
             entities.append(
-                GeelyVehicleRemoteSwitch(description, vehicle, entry.entry_id, coordinator, client)
+                GeelyVehicleRemoteSwitch(description, vehicle, entry, coordinator, client)
             )
 
     async_add_entities(entities)
