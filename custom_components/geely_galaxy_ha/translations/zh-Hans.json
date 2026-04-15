@@ -147,14 +147,16 @@
       }
     },
     "switch": {
-      "climate_switch": {
-        "name": "空调"
-      },
       "door_switch": {
         "name": "车门锁"
       },
       "trunk_switch": {
         "name": "后备箱"
+      }
+    },
+    "climate": {
+      "climate": {
+        "name": "空调"
       }
     },
     "button": {

@@ -69,10 +69,6 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
         if not isinstance(vehicle_status, dict):
             return None
 
-        if self.entity_description.service_type == "climate":
-            raw = _get_nested(vehicle_status, "additionalVehicleStatus.climateStatus.preClimateActive")
-            return None if raw is None else str(raw).lower() == "true"
-
         if self.entity_description.service_type == "door":
             locks = [
                 _get_nested(vehicle_status, "additionalVehicleStatus.drivingSafetyStatus.doorLockStatusDriver"),
@@ -99,13 +95,7 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
 
         pre_command_value = self.is_on
 
-        if self.entity_description.service_type == "climate":
-            await self._client.async_remote_climate(
-                vehicle_id=self._vin,
-                authorization=authorization,
-                turn_on=True,
-            )
-        elif self.entity_description.service_type == "door":
+        if self.entity_description.service_type == "door":
             await self._client.async_remote_door(
                 vehicle_id=self._vin,
                 authorization=authorization,
@@ -139,13 +129,7 @@ class GeelyVehicleRemoteSwitch(SwitchEntity):
 
         pre_command_value = self.is_on
 
-        if self.entity_description.service_type == "climate":
-            await self._client.async_remote_climate(
-                vehicle_id=self._vin,
-                authorization=authorization,
-                turn_on=False,
-            )
-        elif self.entity_description.service_type == "door":
+        if self.entity_description.service_type == "door":
             await self._client.async_remote_door(
                 vehicle_id=self._vin,
                 authorization=authorization,

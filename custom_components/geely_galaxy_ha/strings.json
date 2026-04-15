@@ -147,14 +147,16 @@
       }
     },
     "switch": {
-      "climate_switch": {
-        "name": "Climate"
-      },
       "door_switch": {
         "name": "Door Lock"
       },
       "trunk_switch": {
         "name": "Trunk"
+      }
+    },
+    "climate": {
+      "climate": {
+        "name": "Climate"
       }
     },
     "button": {

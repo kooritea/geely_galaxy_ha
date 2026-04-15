@@ -8,7 +8,7 @@ from typing import Any
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS: list[str] = ["sensor", "binary_sensor", "device_tracker", "switch", "button"]
+PLATFORMS: list[str] = ["switch", "button", "climate",  "binary_sensor", "sensor", "device_tracker"]
 
 
 async def async_setup_entry(hass: Any, entry: Any) -> bool:

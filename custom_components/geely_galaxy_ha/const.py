@@ -432,12 +432,6 @@ class GeelyVehicleButtonDescription(ButtonEntityDescription):
 
 VEHICLE_SWITCH_DESCRIPTIONS: tuple[GeelyVehicleSwitchDescription, ...] = (
     GeelyVehicleSwitchDescription(
-        key="climate_switch",
-        translation_key="climate_switch",
-        icon="mdi:air-conditioner",
-        service_type="climate",
-    ),
-    GeelyVehicleSwitchDescription(
         key="door_switch",
         translation_key="door_switch",
         icon="mdi:car-door-lock",
