@@ -8,7 +8,7 @@ from typing import Any
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
-PLATFORMS: list[str] = ["sensor", "binary_sensor", "device_tracker"]
+PLATFORMS: list[str] = ["sensor", "binary_sensor", "device_tracker", "switch", "button"]
 
 
 async def async_setup_entry(hass: Any, entry: Any) -> bool:
@@ -89,8 +89,8 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     await coordinator.async_config_entry_first_refresh()
     _LOGGER.info("首次刷新车辆列表完成，entry_id=%s，count=%s", entry.entry_id, len(coordinator.data or []))
 
-    coordinator.async_start_vehicle_status_polling(entry)
-    _LOGGER.info("已启动每分钟车辆状态轮询，entry_id=%s", entry.entry_id)
+    await coordinator.async_start_vehicle_status_polling(entry)
+    _LOGGER.info("已启动每分钟车辆状态轮询（含首次立即获取），entry_id=%s", entry.entry_id)
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "client": client,

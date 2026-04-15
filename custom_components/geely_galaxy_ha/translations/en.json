@@ -105,10 +105,18 @@
         "name": "Electric Parking Brake"
       },
       "seat_belt_status_driver": {
-        "name": "Driver Seat Belt"
+        "name": "Driver Seat Belt",
+        "state": {
+          "on": "Fastened",
+          "off": "Unfastened"
+        }
       },
       "vehicle_alarm": {
-        "name": "Vehicle Alarm"
+        "name": "Anti-Theft Alarm",
+        "state": {
+          "on": "On",
+          "off": "Off"
+        }
       },
       "is_charging": {
         "name": "Charging"
@@ -136,6 +144,25 @@
     "device_tracker": {
       "vehicle_location": {
         "name": "Vehicle Location"
+      }
+    },
+    "switch": {
+      "climate_switch": {
+        "name": "Climate"
+      },
+      "door_switch": {
+        "name": "Door Lock"
+      },
+      "trunk_switch": {
+        "name": "Trunk"
+      }
+    },
+    "button": {
+      "find_car": {
+        "name": "Honk to Find Car",
+        "state": {
+          "unknown": "Not Triggered"
+        }
       }
     }
   }

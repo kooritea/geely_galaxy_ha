@@ -57,7 +57,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         except Exception as err:
             raise UpdateFailed(f"Failed to update Geely vehicles: {err}") from err
 
-    def async_start_vehicle_status_polling(self, entry: ConfigEntry) -> None:
+    async def async_start_vehicle_status_polling(self, entry: ConfigEntry) -> None:
         if self._status_poll_unsub is not None:
             return
 
@@ -69,6 +69,9 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             _poll,
             DEFAULT_VEHICLE_STATUS_INTERVAL,
         )
+
+        # 立即获取一次车辆状态，消除启动后的空白等待期
+        await self.async_poll_vehicle_status(entry)
 
     async def async_stop(self) -> None:
         if self._status_poll_unsub is not None:

@@ -105,10 +105,18 @@
         "name": "电子驻车"
       },
       "seat_belt_status_driver": {
-        "name": "驾驶员安全带"
+        "name": "驾驶员安全带",
+        "state": {
+          "on": "已系带",
+          "off": "未系带"
+        }
       },
       "vehicle_alarm": {
-        "name": "车辆报警"
+        "name": "防盗报警",
+        "state": {
+          "on": "开启",
+          "off": "关闭"
+        }
       },
       "is_charging": {
         "name": "正在充电"
@@ -136,6 +144,25 @@
     "device_tracker": {
       "vehicle_location": {
         "name": "车辆位置"
+      }
+    },
+    "switch": {
+      "climate_switch": {
+        "name": "空调"
+      },
+      "door_switch": {
+        "name": "车门锁"
+      },
+      "trunk_switch": {
+        "name": "后备箱"
+      }
+    },
+    "button": {
+      "find_car": {
+        "name": "鸣笛寻车",
+        "state": {
+          "unknown": "未触发"
+        }
       }
     }
   }

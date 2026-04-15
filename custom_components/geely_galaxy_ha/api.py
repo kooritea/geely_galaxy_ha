@@ -475,3 +475,110 @@ class GeelyGalaxyApiClient:
         if not isinstance(data, dict):
             raise RuntimeError(f"vehicle detailed status payload invalid: {payload}")
         return data
+
+    async def async_remote_control(
+        self,
+        *,
+        vehicle_id: str,
+        authorization: str,
+        service_id: str,
+        command: str,
+        duration: int = 0,
+        service_parameters: list[dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
+        path = f"/remote-control/vehicle/telematics/{vehicle_id}"
+        url = f"{self.XCHANGER_DEVICE_BASE_URL}{path}"
+        body: dict[str, Any] = {
+            "command": command,
+            "creator": "tc",
+            "operationScheduling": {
+                "duration": duration,
+                "interval": 0,
+                "occurs": 1,
+                "recurrentOperation": False,
+            },
+            "serviceId": service_id,
+            "timestamp": int(time.time() * 1000),
+        }
+        if service_parameters is not None:
+            body["serviceParameters"] = service_parameters
+
+        body_md5 = self._content_md5_from_json_body(body)
+        headers = self._build_xchanger_headers(
+            method="PUT",
+            host=self.XCHANGER_DEVICE_BASE_URL.replace("https://", ""),
+            path=path,
+            query_param=None,
+            body_md5_base64=body_md5,
+            authorization=authorization,
+        )
+        status, payload = await self._async_request("PUT", url, headers, body)
+        if status != 200 or payload.get("success") is not True or str(payload.get("code")) != "1000":
+            raise RuntimeError(f"remote control failed: {payload}")
+        data = payload.get("data")
+        if not isinstance(data, dict):
+            raise RuntimeError(f"remote control payload invalid: {payload}")
+        return data
+
+    async def async_remote_climate(
+        self,
+        *,
+        vehicle_id: str,
+        authorization: str,
+        turn_on: bool,
+        temperature: int = 20,
+        duration: int = 60,
+    ) -> dict[str, Any]:
+        return await self.async_remote_control(
+            vehicle_id=vehicle_id,
+            authorization=authorization,
+            service_id="RCE",
+            command="start" if turn_on else "stop",
+            duration=duration,
+            service_parameters=[{"key": "rce", "value": str(temperature)}],
+        )
+
+    async def async_remote_door(
+        self,
+        *,
+        vehicle_id: str,
+        authorization: str,
+        unlock: bool,
+    ) -> dict[str, Any]:
+        return await self.async_remote_control(
+            vehicle_id=vehicle_id,
+            authorization=authorization,
+            service_id="RDU" if unlock else "RDL",
+            command="start",
+        )
+
+    async def async_remote_trunk(
+        self,
+        *,
+        vehicle_id: str,
+        authorization: str,
+        open_: bool,
+    ) -> dict[str, Any]:
+        return await self.async_remote_control(
+            vehicle_id=vehicle_id,
+            authorization=authorization,
+            service_id="RTU",
+            command="start" if open_ else "stop",
+        )
+
+    async def async_remote_find_vehicle(
+        self,
+        *,
+        vehicle_id: str,
+        authorization: str,
+        duration: int = 6,
+        mode: str = "horn-light-flash",
+    ) -> dict[str, Any]:
+        return await self.async_remote_control(
+            vehicle_id=vehicle_id,
+            authorization=authorization,
+            service_id="RHL",
+            command="start",
+            duration=duration,
+            service_parameters=[{"key": "rhl", "value": mode}],
+        )

@@ -15,6 +15,8 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
+from homeassistant.components.switch import SwitchEntityDescription
+from homeassistant.components.button import ButtonEntityDescription
 
 DOMAIN = "geely_galaxy_ha"
 
@@ -334,16 +336,16 @@ VEHICLE_BINARY_SENSOR_DESCRIPTIONS: tuple[GeelyVehicleBinarySensorDescription, .
         key="seat_belt_status_driver",
         translation_key="seat_belt_status_driver",
         data_path="additionalVehicleStatus.drivingSafetyStatus.seatBeltStatusDriver",
-        on_value="true",  # "true"=已系
+        on_value="false",  # "true"=未系带, "false"=已系带
         icon="mdi:seatbelt",
     ),
-    # -- 车辆报警 --
+    # -- 防盗报警 --
     GeelyVehicleBinarySensorDescription(
         key="vehicle_alarm",
         translation_key="vehicle_alarm",
         data_path="additionalVehicleStatus.drivingSafetyStatus.vehicleAlarm",
         device_class=BinarySensorDeviceClass.SAFETY,
-        on_value="1",  # "1"=报警
+        on_value="1",  # "1"=开启, "0"=关闭
         icon="mdi:alarm-light",
     ),
     # -- 充电状态 --
@@ -394,5 +396,67 @@ VEHICLE_BINARY_SENSOR_DESCRIPTIONS: tuple[GeelyVehicleBinarySensorDescription, .
         data_path="eg.blocked.status",
         on_value="1",
         icon="mdi:car-off",
+    ),
+)
+
+
+# ---------------------------------------------------------------------------
+# Remote control constants
+# ---------------------------------------------------------------------------
+
+REMOTE_SERVICE_RCE = "RCE"
+REMOTE_SERVICE_RDU = "RDU"
+REMOTE_SERVICE_RDL = "RDL"
+REMOTE_SERVICE_RTU = "RTU"
+REMOTE_SERVICE_RHL = "RHL"
+
+
+# ---------------------------------------------------------------------------
+# Switch and button entity descriptions
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, kw_only=True)
+class GeelyVehicleSwitchDescription(SwitchEntityDescription):
+    """Describe a Geely vehicle remote switch."""
+
+    service_type: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class GeelyVehicleButtonDescription(ButtonEntityDescription):
+    """Describe a Geely vehicle button."""
+
+    service_type: str
+
+
+VEHICLE_SWITCH_DESCRIPTIONS: tuple[GeelyVehicleSwitchDescription, ...] = (
+    GeelyVehicleSwitchDescription(
+        key="climate_switch",
+        translation_key="climate_switch",
+        icon="mdi:air-conditioner",
+        service_type="climate",
+    ),
+    GeelyVehicleSwitchDescription(
+        key="door_switch",
+        translation_key="door_switch",
+        icon="mdi:car-door-lock",
+        service_type="door",
+    ),
+    GeelyVehicleSwitchDescription(
+        key="trunk_switch",
+        translation_key="trunk_switch",
+        icon="mdi:car-back",
+        service_type="trunk",
+    ),
+)
+
+
+VEHICLE_BUTTON_DESCRIPTIONS: tuple[GeelyVehicleButtonDescription, ...] = (
+    GeelyVehicleButtonDescription(
+        key="find_car",
+        translation_key="find_car",
+        icon="mdi:car-search",
+        service_type="find_car",
     ),
 )
