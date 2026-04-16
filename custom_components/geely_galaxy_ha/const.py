@@ -26,6 +26,9 @@ CONF_TOKEN = "token"
 CONF_TOKEN_EXPIRES_AT = "token_expires_at"
 CONF_VEHICLE_AUTHORIZATIONS = "vehicle_authorizations"
 
+SESSIONS_STORE_DIR = ".storage/geely_galaxy_ha"
+SESSIONS_STORE_FILE = "sessions.json"
+
 DEFAULT_SCAN_INTERVAL = timedelta(minutes=10)
 DEFAULT_VEHICLE_STATUS_INTERVAL = timedelta(minutes=1)
 

@@ -8,6 +8,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 
 from .const import CONF_HARDWARE_DEVICE_ID, CONF_REFRESH_TOKEN, DOMAIN
+from .session_store import SessionStore
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,11 +31,16 @@ class GeelyGalaxyConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             await self.async_set_unique_id(hardware_device_id)
             _LOGGER.info("配置流程完成设置 unique_id，hardware_device_id=%s", hardware_device_id)
             self._abort_if_unique_id_configured()
+            session_store = SessionStore(self.hass)
+            await session_store.async_save(
+                hardware_device_id,
+                {CONF_REFRESH_TOKEN: user_input[CONF_REFRESH_TOKEN]},
+            )
+            _LOGGER.info("配置流程已写入会话凭证，hardware_device_id=%s", hardware_device_id)
             _LOGGER.info("配置流程准备创建 entry，title=%s", hardware_device_id)
             return self.async_create_entry(
                 title=hardware_device_id,
                 data={
-                    CONF_REFRESH_TOKEN: user_input[CONF_REFRESH_TOKEN],
                     CONF_HARDWARE_DEVICE_ID: hardware_device_id,
                 },
             )
