@@ -57,7 +57,8 @@
         "state": {
           "drive": "Drive",
           "reverse": "Reverse",
-          "neutral": "Neutral"
+          "neutral": "Neutral",
+          "park": "Park"
         }
       },
       "engine_speed": {

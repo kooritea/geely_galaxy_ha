@@ -202,8 +202,8 @@ VEHICLE_SENSOR_DESCRIPTIONS: tuple[GeelyVehicleSensorDescription, ...] = (
         translation_key="transimission_gear_position",
         data_path="additionalVehicleStatus.drivingBehaviourStatus.transimissionGearPostion",
         device_class=SensorDeviceClass.ENUM,
-        options=["drive", "reverse", "neutral"],
-        value_map={"1": "drive", "2": "reverse", "3": "neutral"},
+        options=["drive", "reverse", "neutral", "park"],
+        value_map={"1": "drive", "2": "reverse", "3": "neutral", "4": "park"},
         icon="mdi:car-shift-pattern",
     ),
     GeelyVehicleSensorDescription(

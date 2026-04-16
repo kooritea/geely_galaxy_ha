@@ -57,7 +57,8 @@
         "state": {
           "drive": "前进挡",
           "reverse": "倒挡",
-          "neutral": "空挡"
+          "neutral": "空挡",
+          "park": "驻车挡"
         }
       },
       "engine_speed": {
