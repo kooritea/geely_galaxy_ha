@@ -38,13 +38,25 @@
         "name": "充满电所需时间"
       },
       "state_of_charge": {
-        "name": "充电量状态"
+        "name": "充电状态",
+        "state": {
+          "not_charging": "未在充电",
+          "charging": "正在充电"
+        }
       },
       "status_of_charger_connection": {
-        "name": "充电器连接状态"
+        "name": "充电器连接状态",
+        "state": {
+          "disconnected": "未连接",
+          "connected": "已连接"
+        }
       },
       "charge_led_ctrl": {
-        "name": "充电指示灯"
+        "name": "充电指示灯",
+        "state": {
+          "led_off": "熄灭",
+          "led_on": "亮起"
+        }
       },
       "charge_hv_sts": {
         "name": "高压充电状态"
@@ -120,10 +132,18 @@
         }
       },
       "is_charging": {
-        "name": "正在充电"
+        "name": "充电状态",
+        "state": {
+          "off": "未在充电",
+          "on": "正在充电"
+        }
       },
       "is_plugged_in": {
-        "name": "充电器已连接"
+        "name": "插枪状态",
+        "state": {
+          "on": "已插枪",
+          "off": "未插枪"
+        }
       },
       "pt_ready": {
         "name": "车辆就绪",

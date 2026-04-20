@@ -38,13 +38,25 @@
         "name": "Time to Fully Charged"
       },
       "state_of_charge": {
-        "name": "State of Charge"
+        "name": "Charging State",
+        "state": {
+          "not_charging": "Not Charging",
+          "charging": "Charging"
+        }
       },
       "status_of_charger_connection": {
-        "name": "Charger Connection Status"
+        "name": "Charger Connection Status",
+        "state": {
+          "disconnected": "Disconnected",
+          "connected": "Connected"
+        }
       },
       "charge_led_ctrl": {
-        "name": "Charge LED"
+        "name": "Charge LED",
+        "state": {
+          "led_off": "Off",
+          "led_on": "On"
+        }
       },
       "charge_hv_sts": {
         "name": "HV Charge Status"
@@ -120,10 +132,18 @@
         }
       },
       "is_charging": {
-        "name": "Charging"
+        "name": "Charging",
+        "state": {
+          "off": "Not Charging",
+          "on": "Charging"
+        }
       },
       "is_plugged_in": {
-        "name": "Plugged In"
+        "name": "Plugged In",
+        "state": {
+          "on": "Plugged In",
+          "off": "Unplugged"
+        }
       },
       "pt_ready": {
         "name": "EV Ready",
