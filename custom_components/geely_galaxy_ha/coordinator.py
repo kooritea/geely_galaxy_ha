@@ -267,7 +267,18 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             return False
 
     async def _async_on_vehicle_poll_timer(self, vin: str, entry: ConfigEntry, generation: int) -> None:
-        if self._vehicle_poll_generation.get(vin) != generation:
+        self._vehicle_poll_timer_handles.pop(vin, None)
+
+        current_generation = self._vehicle_poll_generation.get(vin)
+        _LOGGER.debug(
+            "车辆状态轮询定时器触发 vin=%s generation=%s current_generation=%s inflight=%s rapid=%s",
+            vin,
+            generation,
+            current_generation,
+            vin in self._vehicle_poll_inflight,
+            vin in self._rapid_poll_vins,
+        )
+        if current_generation != generation:
             return
         if vin in self._rapid_poll_vins:
             return
@@ -276,6 +287,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
 
         now = self._get_current_timestamp()
         if not self._is_vehicle_due(vin, now):
+            _LOGGER.debug("车辆状态轮询未到期，跳过执行 vin=%s now=%s", vin, now)
             self._reschedule_vehicle_poll(vin, entry, now)
             return
 
@@ -296,6 +308,12 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                     poll_now = self._get_current_timestamp()
                 _LOGGER.debug("重排车辆状态轮询 vin=%s at=%s generation=%s", vin, poll_now, generation)
                 self._reschedule_vehicle_poll(vin, entry, poll_now, force=True)
+                _LOGGER.debug(
+                    "车辆状态轮询已重排 vin=%s generation=%s next_due_at=%s",
+                    vin,
+                    generation,
+                    self._vehicle_next_poll_at.get(vin),
+                )
 
     async def _async_refresh_vehicle_authorizations_if_needed(
         self,
