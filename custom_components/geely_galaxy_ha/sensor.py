@@ -79,13 +79,13 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Geely Galaxy sensors from config entry."""
-    _LOGGER.info("开始 setup sensor entry，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("开始 setup sensor entry，entry_id=%s", entry.entry_id)
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data["coordinator"]
 
     vehicles = coordinator.data or []
     valid_vehicles = [vehicle for vehicle in vehicles if vehicle.get("vin")]
-    _LOGGER.info(
+    _LOGGER.debug(
         "车辆过滤完成，entry_id=%s，raw=%s，valid=%s",
         entry.entry_id, len(vehicles), len(valid_vehicles),
     )
@@ -97,6 +97,6 @@ async def async_setup_entry(
                 GeelyVehicleStatusSensor(description, vehicle, entry.entry_id, coordinator)
             )
 
-    _LOGGER.info("实体构建完成，entry_id=%s，entity_count=%s", entry.entry_id, len(entities))
+    _LOGGER.debug("实体构建完成，entry_id=%s，entity_count=%s", entry.entry_id, len(entities))
     async_add_entities(entities)
-    _LOGGER.info("async_add_entities 调用完成，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("async_add_entities 调用完成，entry_id=%s", entry.entry_id)

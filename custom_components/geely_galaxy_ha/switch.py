@@ -165,7 +165,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Geely Galaxy switches from config entry."""
-    _LOGGER.info("开始 setup switch entry，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("开始 setup switch entry，entry_id=%s", entry.entry_id)
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data["coordinator"]
     client = data["client"]

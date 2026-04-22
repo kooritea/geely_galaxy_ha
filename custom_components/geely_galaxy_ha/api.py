@@ -30,6 +30,7 @@ RequestFunc = Callable[
     Awaitable[tuple[int, dict[str, Any]]],
 ]
 TokenUpdateFunc = Callable[[str, int, str], Awaitable[None]]
+ReauthRequiredFunc = Callable[[], Awaitable[None]]
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class GeelyGalaxyApiClient:
         token_expires_at: int = 0,
         request_func: RequestFunc | None = None,
         on_token_update: TokenUpdateFunc | None = None,
+        on_reauth_required: ReauthRequiredFunc | None = None,
     ) -> None:
         self.refresh_token = refresh_token
         self.hardware_device_id = hardware_device_id
@@ -67,6 +69,8 @@ class GeelyGalaxyApiClient:
         self.token_expires_at = token_expires_at
         self._request_func = request_func
         self._on_token_update = on_token_update
+        self._on_reauth_required = on_reauth_required
+        self._reauth_notified = False
 
     @staticmethod
     def _format_gmt_date() -> str:
@@ -337,6 +341,11 @@ class GeelyGalaxyApiClient:
                 status,
                 payload.get("code"),
             )
+            if self._is_login_invalid(status, payload) and not self._reauth_notified:
+                self._reauth_notified = True
+                _LOGGER.warning("重试后仍登录失效，触发重新登录流程")
+                if self._on_reauth_required is not None:
+                    await self._on_reauth_required()
         return status, payload
 
     async def async_ensure_valid_token(self) -> str:

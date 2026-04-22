@@ -135,7 +135,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Geely Galaxy binary sensors from config entry."""
-    _LOGGER.info("开始 setup binary_sensor entry，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("开始 setup binary_sensor entry，entry_id=%s", entry.entry_id)
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data["coordinator"]
 
@@ -154,9 +154,9 @@ async def async_setup_entry(
                 GeelyVehicleBinarySensor(description, vehicle, entry.entry_id, coordinator)
             )
 
-    _LOGGER.info(
+    _LOGGER.debug(
         "binary_sensor 实体构建完成，entry_id=%s，entity_count=%s",
         entry.entry_id, len(entities),
     )
     async_add_entities(entities)
-    _LOGGER.info("binary_sensor async_add_entities 调用完成，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("binary_sensor async_add_entities 调用完成，entry_id=%s", entry.entry_id)

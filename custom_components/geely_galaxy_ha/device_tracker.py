@@ -247,7 +247,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up Geely Galaxy device tracker from config entry."""
-    _LOGGER.info("开始 setup device_tracker entry，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("开始 setup device_tracker entry，entry_id=%s", entry.entry_id)
     data = hass.data[DOMAIN][entry.entry_id]
     coordinator = data["coordinator"]
 
@@ -259,7 +259,7 @@ async def async_setup_entry(
         for vehicle in valid_vehicles
     ]
 
-    _LOGGER.info(
+    _LOGGER.debug(
         "device_tracker 实体构建完成，entry_id=%s，entity_count=%s",
         entry.entry_id, len(entities),
     )

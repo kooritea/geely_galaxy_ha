@@ -78,6 +78,18 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
     async def _async_update_data(self) -> list[dict[str, Any]]:
         try:
             vehicles = await self.client.async_get_vehicle_list()
+
+            if self._poll_entry is not None:
+                now = self._get_current_timestamp()
+                for vehicle in vehicles:
+                    vin = vehicle.get("vin")
+                    if not vin:
+                        continue
+                    if vin in self._vehicle_poll_timer_handles or vin in self._vehicle_poll_inflight:
+                        continue
+                    self._schedule_vehicle_poll(vin, self._poll_entry, now)
+                    _LOGGER.debug("检测到新车辆并启动状态轮询 vin=%s", vin)
+
             return vehicles
         except Exception as err:
             raise UpdateFailed(f"Failed to update Geely vehicles: {err}") from err
@@ -137,9 +149,9 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                 if self.vehicle_status_by_vin.get(vin) != detailed:
                     self.vehicle_status_by_vin[vin] = detailed
                     changed = True
-                _LOGGER.info("车辆状态轮询成功 vin=%s", vin)
+                _LOGGER.debug("车辆状态轮询成功 vin=%s", vin)
             except Exception as err:
-                _LOGGER.info("车辆状态轮询失败 vin=%s err=%s", vin, err)
+                _LOGGER.debug("车辆状态轮询失败 vin=%s err=%s", vin, err)
             finally:
                 self._mark_vehicle_polled(vin, now)
 
@@ -246,9 +258,9 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             changed = self.vehicle_status_by_vin.get(vin) != detailed
             if changed:
                 self.vehicle_status_by_vin[vin] = detailed
-                _LOGGER.info("车辆状态轮询成功 vin=%s", vin)
+                _LOGGER.debug("车辆状态轮询成功 vin=%s", vin)
                 return True
-            _LOGGER.info("车辆状态轮询成功 vin=%s", vin)
+            _LOGGER.debug("车辆状态轮询成功 vin=%s", vin)
             return False
         except Exception as err:
             _LOGGER.warning("车辆状态轮询失败 vin=%s err=%s", vin, err)
@@ -268,15 +280,22 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             return
 
         self._vehicle_poll_inflight.add(vin)
+        poll_now: float | None = None
         try:
             changed = await self._async_poll_single_vehicle_regular(vin, entry)
             poll_now = self._get_current_timestamp()
             self._mark_vehicle_polled(vin, poll_now)
             if changed:
                 self.async_update_listeners()
-            self._reschedule_vehicle_poll(vin, entry, poll_now, force=True)
+        except Exception as err:
+            _LOGGER.warning("车辆状态轮询处理异常 vin=%s err=%s", vin, err)
         finally:
             self._vehicle_poll_inflight.discard(vin)
+            if self._vehicle_poll_generation.get(vin) == generation and vin not in self._rapid_poll_vins:
+                if poll_now is None:
+                    poll_now = self._get_current_timestamp()
+                _LOGGER.debug("重排车辆状态轮询 vin=%s at=%s generation=%s", vin, poll_now, generation)
+                self._reschedule_vehicle_poll(vin, entry, poll_now, force=True)
 
     async def _async_refresh_vehicle_authorizations_if_needed(
         self,
@@ -364,7 +383,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             if changed:
                 self.vehicle_status_by_vin[vin] = detailed
                 self.async_update_listeners()
-                _LOGGER.info("快速轮询状态有变化 vin=%s", vin)
+                _LOGGER.debug("快速轮询状态有变化 vin=%s", vin)
             else:
                 _LOGGER.debug("快速轮询状态无变化 vin=%s", vin)
             self._mark_vehicle_polled(vin, self._get_current_timestamp())
@@ -396,11 +415,11 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             existing_task = self._rapid_poll_tasks.get(vin)
             if existing_task and not existing_task.done():
                 existing_task.cancel()
-            _LOGGER.info("重启快速轮询 vin=%s switch=%s", vin, switch_key)
+            _LOGGER.debug("重启快速轮询 vin=%s switch=%s", vin, switch_key)
         else:
             self._rapid_poll_vins.add(vin)
             self._rapid_poll_watchers[vin] = {switch_key: watcher}
-            _LOGGER.info("启动快速轮询 vin=%s switch=%s", vin, switch_key)
+            _LOGGER.debug("启动快速轮询 vin=%s switch=%s", vin, switch_key)
 
         self._cancel_vehicle_poll(vin)
 
@@ -430,13 +449,13 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
 
                 # 所有 watchers 都已满足，提前结束
                 if not self._rapid_poll_watchers.get(vin):
-                    _LOGGER.info("快速轮询完成（状态已变化） vin=%s", vin)
+                    _LOGGER.debug("快速轮询完成（状态已变化） vin=%s", vin)
                     break
 
                 # 请求完成后再等待，天然串行不会并发
                 await asyncio.sleep(_RAPID_POLL_INTERVAL)
             else:
-                _LOGGER.info("快速轮询超时退出 vin=%s", vin)
+                _LOGGER.debug("快速轮询超时退出 vin=%s", vin)
 
         except asyncio.CancelledError:
             # 被新命令取消重启，不清理 _rapid_poll_vins（新任务接管）
@@ -462,7 +481,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             current_value = watcher.check_fn(current_status)
             if current_value is not None and current_value != watcher.pre_command_value:
                 satisfied_keys.append(key)
-                _LOGGER.info(
+                _LOGGER.debug(
                     "开关状态已变化 vin=%s switch=%s: %s → %s",
                     vin, key, watcher.pre_command_value, current_value,
                 )
@@ -475,7 +494,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         self._rapid_poll_vins.discard(vin)
         self._rapid_poll_watchers.pop(vin, None)
         self._rapid_poll_tasks.pop(vin, None)
-        _LOGGER.info("快速轮询已清理，恢复常规轮询 vin=%s", vin)
+        _LOGGER.debug("快速轮询已清理，恢复常规轮询 vin=%s", vin)
 
         if self._poll_entry is not None:
             self._reschedule_vehicle_poll(vin, self._poll_entry, self._get_current_timestamp(), force=True)

@@ -42,13 +42,13 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
         _LOGGER.error("初始化失败：会话凭证缺少 refresh_token，hardware_device_id=%s", hardware_device_id)
         return False
 
-    _LOGGER.info(
+    _LOGGER.debug(
         "开始初始化 Geely Galaxy entry，entry_id=%s，hardware_device_id=%s",
         entry.entry_id,
         hardware_device_id,
     )
     session = async_get_clientsession(hass)
-    _LOGGER.info("HTTP session 初始化完成，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("HTTP session 初始化完成，entry_id=%s", entry.entry_id)
 
     async def _request(
         method: str,
@@ -72,7 +72,14 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
                 CONF_REFRESH_TOKEN: refreshed_token,
             },
         )
-        _LOGGER.info("token 已更新，entry_id=%s，token_expires_at=%s", entry.entry_id, token_expires_at)
+
+        data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+        coordinator = data.get("coordinator") if data else None
+        if coordinator is not None and getattr(coordinator, "_poll_entry", None) is None:
+            await coordinator.async_start_vehicle_status_polling(entry)
+            _LOGGER.debug("token 更新后恢复车辆状态轮询，entry_id=%s", entry.entry_id)
+
+        _LOGGER.debug("token 已更新，entry_id=%s，token_expires_at=%s", entry.entry_id, token_expires_at)
 
     async def _on_vehicle_authorizations_update(entry_obj: Any, authorizations: dict[str, dict[str, Any]]) -> None:
         if entry_obj.entry_id != entry.entry_id:
@@ -81,7 +88,37 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
             hardware_device_id,
             {CONF_VEHICLE_AUTHORIZATIONS: authorizations},
         )
-        _LOGGER.info("车辆 authorization 已持久化，entry_id=%s，count=%s", entry.entry_id, len(authorizations))
+        _LOGGER.debug("车辆 authorization 已持久化，entry_id=%s，count=%s", entry.entry_id, len(authorizations))
+
+    reauth_handled = False
+
+    async def _on_reauth_required() -> None:
+        nonlocal reauth_handled
+        if reauth_handled:
+            return
+        reauth_handled = True
+
+        data = hass.data.get(DOMAIN, {}).get(entry.entry_id)
+        coordinator = data.get("coordinator") if data else None
+        if coordinator is not None:
+            await coordinator.async_cancel_all_rapid_polls()
+            await coordinator.async_stop()
+
+        try:
+            await hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "Geely Galaxy 需要重新登录",
+                    "message": "检测到登录凭证已失效，已停止车辆轮询。请在集成配置中重新登录后恢复轮询。",
+                    "notification_id": f"{DOMAIN}_{entry.entry_id}_reauth_required",
+                },
+                blocking=False,
+            )
+        except Exception as err:
+            _LOGGER.warning("发送重新登录通知失败 entry_id=%s err=%s", entry.entry_id, err)
+
+        _LOGGER.warning("登录状态失效，已停止轮询并发送重新登录通知 entry_id=%s", entry.entry_id)
 
     client = GeelyGalaxyApiClient(
         refresh_token=refresh_token,
@@ -90,8 +127,9 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
         token_expires_at=session_data.get(CONF_TOKEN_EXPIRES_AT, 0),
         request_func=_request,
         on_token_update=_on_token_update,
+        on_reauth_required=_on_reauth_required,
     )
-    _LOGGER.info("API client 初始化完成，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("API client 初始化完成，entry_id=%s", entry.entry_id)
 
     coordinator = GeelyGalaxyCoordinator(
         hass,
@@ -99,22 +137,22 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
         persisted_vehicle_authorizations=session_data.get(CONF_VEHICLE_AUTHORIZATIONS) or {},
         persist_vehicle_authorizations_cb=_on_vehicle_authorizations_update,
     )
-    _LOGGER.info("coordinator 初始化完成，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("coordinator 初始化完成，entry_id=%s", entry.entry_id)
 
     await coordinator.async_config_entry_first_refresh()
-    _LOGGER.info("首次刷新车辆列表完成，entry_id=%s，count=%s", entry.entry_id, len(coordinator.data or []))
+    _LOGGER.debug("首次刷新车辆列表完成，entry_id=%s，count=%s", entry.entry_id, len(coordinator.data or []))
 
     await coordinator.async_start_vehicle_status_polling(entry)
-    _LOGGER.info("已启动每分钟车辆状态轮询（含首次立即获取），entry_id=%s", entry.entry_id)
+    _LOGGER.debug("已启动每分钟车辆状态轮询（含首次立即获取），entry_id=%s", entry.entry_id)
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "client": client,
         "coordinator": coordinator,
     }
-    _LOGGER.info("hass.data 写入完成，entry_id=%s", entry.entry_id)
+    _LOGGER.debug("hass.data 写入完成，entry_id=%s", entry.entry_id)
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    _LOGGER.info("平台 setup 转发完成，entry_id=%s，platforms=%s", entry.entry_id, PLATFORMS)
+    _LOGGER.debug("平台 setup 转发完成，entry_id=%s，platforms=%s", entry.entry_id, PLATFORMS)
     return True
 
 
