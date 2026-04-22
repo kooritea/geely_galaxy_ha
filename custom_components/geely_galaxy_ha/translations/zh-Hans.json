@@ -1,4 +1,28 @@
 {
+  "config": {
+    "step": {
+      "user": {
+        "title": "添加吉利银河",
+        "description": "请输入账号 refresh_token 与硬件设备 ID。",
+        "data": {
+          "refresh_token": "Refresh Token",
+          "hardware_device_id": "Hardware Device ID"
+        }
+      },
+      "reauth_confirm": {
+        "title": "重新登录吉利银河",
+        "description": "检测到凭证失效，请输入新的 refresh_token。",
+        "data": {
+          "refresh_token": "Refresh Token"
+        }
+      }
+    },
+    "abort": {
+      "reauth_successful": "重新登录成功",
+      "wrong_account": "当前账号与原配置不匹配",
+      "missing_hardware_device_id": "缺少硬件设备 ID，无法重新登录"
+    }
+  },
   "entity": {
     "sensor": {
       "distance_to_empty": {

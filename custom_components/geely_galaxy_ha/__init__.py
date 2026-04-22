@@ -118,7 +118,20 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
         except Exception as err:
             _LOGGER.warning("发送重新登录通知失败 entry_id=%s err=%s", entry.entry_id, err)
 
-        _LOGGER.warning("登录状态失效，已停止轮询并发送重新登录通知 entry_id=%s", entry.entry_id)
+        progress = hass.config_entries.flow.async_progress_by_handler(DOMAIN)
+        in_reauth = any(
+            item.get("context", {}).get("source") == "reauth"
+            and item.get("context", {}).get("entry_id") == entry.entry_id
+            for item in progress
+        )
+        if not in_reauth:
+            await hass.config_entries.flow.async_init(
+                DOMAIN,
+                context={"source": "reauth", "entry_id": entry.entry_id},
+                data=entry.data,
+            )
+
+        _LOGGER.warning("登录状态失效，已停止轮询并触发重新登录流程 entry_id=%s", entry.entry_id)
 
     client = GeelyGalaxyApiClient(
         refresh_token=refresh_token,
