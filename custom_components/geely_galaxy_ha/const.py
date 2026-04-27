@@ -29,7 +29,6 @@ CONF_VEHICLE_AUTHORIZATIONS = "vehicle_authorizations"
 SESSIONS_STORE_DIR = ".storage/geely_galaxy_ha"
 SESSIONS_STORE_FILE = "sessions.json"
 
-DEFAULT_SCAN_INTERVAL = timedelta(minutes=10)
 DEFAULT_VEHICLE_STATUS_INTERVAL = timedelta(minutes=1)
 PT_READY_VEHICLE_STATUS_INTERVAL = timedelta(seconds=30)
 

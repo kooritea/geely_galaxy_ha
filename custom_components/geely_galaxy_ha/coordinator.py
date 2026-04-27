@@ -16,7 +16,6 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from .api import GeelyGalaxyApiClient
 from .const import (
     CONF_VEHICLE_AUTHORIZATIONS,
-    DEFAULT_SCAN_INTERVAL,
     DEFAULT_VEHICLE_STATUS_INTERVAL,
     DOMAIN,
     PT_READY_VEHICLE_STATUS_INTERVAL,
@@ -52,7 +51,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             hass,
             _LOGGER,
             name=DOMAIN,
-            update_interval=DEFAULT_SCAN_INTERVAL,
+            update_interval=None,
         )
         self.client = client
         self._persist_vehicle_authorizations_cb = persist_vehicle_authorizations_cb
@@ -97,9 +96,15 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
     async def async_start_vehicle_status_polling(self, entry: ConfigEntry) -> None:
         if self._poll_entry is not None:
             return
+
+        if not self.data:
+            vehicles = await self._async_update_data()
+            self.data = vehicles
+        else:
+            vehicles = self.data
+
         self._poll_entry = entry
 
-        vehicles = self.data or []
         now = self._get_current_timestamp()
         for vehicle in vehicles:
             vin = vehicle.get("vin")
