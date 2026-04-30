@@ -293,7 +293,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         now = self._get_current_timestamp()
         if not self._is_vehicle_due(vin, now):
             _LOGGER.debug("车辆状态轮询未到期，跳过执行 vin=%s now=%s", vin, now)
-            self._reschedule_vehicle_poll(vin, entry, now)
+            self._reschedule_vehicle_poll(vin, entry, now, force=True)
             return
 
         self._vehicle_poll_inflight.add(vin)
