@@ -442,6 +442,11 @@ class GeelyGalaxyApiClient:
         )
         status, payload = await self._async_request("POST", url, headers, json_body)
         if status != 200 or payload.get("success") is not True or payload.get("code") != 1000:
+            if str(payload.get("code")) == "1501" and not self._reauth_notified:
+                self._reauth_notified = True
+                _LOGGER.warning("第三方 authorization 刷新失败，触发重新登录流程")
+                if self._on_reauth_required is not None:
+                    await self._on_reauth_required()
             raise RuntimeError(f"get authorization failed: {payload}")
 
         data = payload.get("data") or {}

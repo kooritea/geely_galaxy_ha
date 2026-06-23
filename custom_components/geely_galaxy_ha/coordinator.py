@@ -124,7 +124,8 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         if not vehicles:
             return
 
-        await self._async_refresh_vehicle_authorizations_if_needed(vehicles, entry)
+        if not await self._async_refresh_vehicle_authorizations_if_needed(vehicles, entry):
+            return
 
         now = self._get_current_timestamp()
         changed = False
@@ -244,7 +245,8 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
 
     async def _async_poll_single_vehicle_regular(self, vin: str, entry: ConfigEntry) -> bool:
         vehicles = self.data or []
-        await self._async_refresh_vehicle_authorizations_if_needed(vehicles, entry)
+        if not await self._async_refresh_vehicle_authorizations_if_needed(vehicles, entry):
+            return False
 
         auth = self.vehicle_authorizations.get(vin)
         if not auth:
@@ -289,6 +291,8 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             return
         if vin in self._vehicle_poll_inflight:
             return
+        if self._poll_entry is None:
+            return
 
         now = self._get_current_timestamp()
         if not self._is_vehicle_due(vin, now):
@@ -308,7 +312,11 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
             _LOGGER.warning("车辆状态轮询处理异常 vin=%s err=%s", vin, err)
         finally:
             self._vehicle_poll_inflight.discard(vin)
-            if self._vehicle_poll_generation.get(vin) == generation and vin not in self._rapid_poll_vins:
+            if (
+                self._poll_entry is not None
+                and self._vehicle_poll_generation.get(vin) == generation
+                and vin not in self._rapid_poll_vins
+            ):
                 if poll_now is None:
                     poll_now = self._get_current_timestamp()
                 _LOGGER.debug("重排车辆状态轮询 vin=%s at=%s generation=%s", vin, poll_now, generation)
@@ -324,7 +332,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
         self,
         vehicles: list[dict[str, Any]],
         entry: ConfigEntry,
-    ) -> None:
+    ) -> bool:
         now = int(datetime.now(UTC).timestamp())
         refresh_required = False
         for vehicle in vehicles:
@@ -338,7 +346,7 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                 break
 
         if not refresh_required:
-            return
+            return True
 
         async with self._authorization_refresh_lock:
             now = int(datetime.now(UTC).timestamp())
@@ -354,10 +362,10 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                     break
 
             if not refresh_required:
-                return
+                return True
 
             if now - self._last_authorization_refresh_at < self._refresh_cooldown_seconds:
-                return
+                return True
 
             try:
                 oauth_code = await self.client.async_get_oauth_code()
@@ -373,6 +381,10 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
                 if now - self._last_auth_refresh_warning_at >= self._refresh_cooldown_seconds:
                     _LOGGER.warning("请更新集成授权：所有车辆 authorization 刷新失败 err=%s", err)
                     self._last_auth_refresh_warning_at = now
+                if self._poll_entry is None:
+                    return False
+
+        return True
 
     def get_vehicle_status_attributes(self, vin: str) -> dict[str, Any]:
         return self.vehicle_status_by_vin.get(vin, {})
@@ -386,7 +398,8 @@ class GeelyGalaxyCoordinator(DataUpdateCoordinator[list[dict[str, Any]]]):
     ) -> bool:
         """轮询单个 VIN 的车辆状态，返回 True 表示状态有变化。"""
         vehicles = self.data or []
-        await self._async_refresh_vehicle_authorizations_if_needed(vehicles, entry)
+        if not await self._async_refresh_vehicle_authorizations_if_needed(vehicles, entry):
+            return False
 
         auth = self.vehicle_authorizations.get(vin)
         if not auth:
